@@ -1,0 +1,17 @@
+apiVersion: 1
+
+datasources:
+  - name: PostgreSQL
+    type: postgres
+    access: proxy
+    orgId: 1
+    url: postgres:5432
+    password: ${POSTGRES_PASSWORD}
+    user: ${POSTGRES_USER}
+    database: fraud_db
+    basicAuth: false
+    isDefault: true
+    jsonData:
+      sslmode: 'disable'
+    version: 1
+    editable: true

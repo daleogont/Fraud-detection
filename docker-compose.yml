@@ -1,9 +1,8 @@
 
+version: '3.8'
 
-# ═══════════════════════════════════════════════════════════════
-#  Real-Time Financial Fraud Detection System
-#  Full stack: Kafka · Spark · Airflow · Delta Lake · MLflow · Grafana
-# ═══════════════════════════════════════════════════════════════
+# Fraud Detection System - Full Stack
+# Simplified for learning - Starts all services with docker-compose
 
 x-airflow-common: &airflow-common
   image: apache/airflow:2.8.1
@@ -15,10 +14,12 @@ x-airflow-common: &airflow-common
     AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
     MLFLOW_TRACKING_URI: http://mlflow:5001
     SPARK_MASTER: spark://spark-master:7077
+    KAGGLE_DATASET_PATH: /data/synthetic_fraud_dataset.csv
   volumes:
     - ./dags:/opt/airflow/dags
     - ./ml:/opt/ml
     - ./spark_jobs:/opt/spark_jobs
+    - ./data:/data
     - delta-lake:/data/delta
     - models-data:/data/models
     - airflow-logs:/opt/airflow/logs
@@ -253,9 +254,13 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       TRANSACTIONS_PER_SECOND: ${TRANSACTIONS_PER_SECOND:-10}
       FRAUD_RATE: ${FRAUD_RATE:-0.01}
+      TRANSACTION_DATASET_PATH: /data/synthetic_fraud_dataset.csv
+      TRANSACTION_DATASET_LOOP: "true"
     depends_on:
       kafka-init:
         condition: service_completed_successfully
+    volumes:
+      - ./data:/data
     networks: [fraud-net]
     restart: on-failure
 

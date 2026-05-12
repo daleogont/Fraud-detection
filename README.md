@@ -1,8 +1,69 @@
 # Real-Time Financial Fraud Detection System
 
-A production-grade data engineering pipeline that detects financial fraud in real time using Apache Kafka, Spark Structured Streaming, Delta Lake, XGBoost, MLflow, Airflow, and Grafana — all running locally via Docker Compose.
+A **complete, working** ML data engineering pipeline for fraud detection. Built for learning.
 
-## Architecture
+**⚡ Quick Start (5 minutes)**
+```bash
+# 1. Clone and navigate
+git clone https://github.com/khurshidnm/fraud-detection.git
+cd fraud-detection
+
+# 2. Setup environment
+cp .env.example .env
+
+# Generate required keys:
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())" > /tmp/fernet.txt
+python -c "import secrets, base64; print(base64.b64encode(secrets.token_bytes(24)).decode())" > /tmp/secret.txt
+
+# Edit .env and fill in:
+# - AIRFLOW_FERNET_KEY: (from /tmp/fernet.txt)
+# - AIRFLOW_SECRET_KEY: (from /tmp/secret.txt)
+# - POSTGRES_PASSWORD: any strong password
+# - GRAFANA_PASSWORD: any password
+
+# 3. Start everything
+make up
+
+# 4. Open services
+# Kafka UI:        http://localhost:8080
+# Spark Master:    http://localhost:8081
+# Airflow:         http://localhost:8083 (admin / admin123)
+# MLflow:          http://localhost:5001
+# Grafana:         http://localhost:3000 (admin / grafana123)
+# PostgreSQL:      localhost:5432
+
+# 5. Train model (in another terminal)
+make train
+
+# 6. Explore data
+make kafka-consume
+make kafka-consume-fraud
+```
+
+That's it! The system is now running and generating fraud detections.
+
+## Why This Project?
+
+If you're an ML student, this project teaches you:
+- ✅ **Data Engineering**: How data flows through a real system
+- ✅ **ML Ops**: Training, deploying, and monitoring models
+- ✅ **Streaming**: Real-time processing (not just batch)
+- ✅ **DevOps**: Docker, orchestration, service management
+- ✅ **End-to-End**: From data ingestion to dashboards
+
+This is a **complete, working system** — you can run it today.
+
+## How Fraud Detection Works (Simple Explanation)
+
+1. **Data arrives**: Customers make transactions (purchase, transfer, etc.)
+2. **Signals**: System checks for "fraud signals" (large amount, unusual location, many txns fast, etc.)
+3. **Scoring**: Combines signals into a fraud score (0-1, where 1 = definitely fraud)
+4. **Alert**: If score > 0.35, transaction is flagged and investigated
+5. **Learning**: System trains models weekly using past transactions to improve
+
+**Key insight**: We use both *rule-based* (manual business rules) and *ML-based* (learned from data) approaches.
+
+## System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -112,6 +173,16 @@ All tunables live in `.env`:
 | `TRANSACTIONS_PER_SECOND` | `10` | Producer throughput |
 | `FRAUD_RATE` | `0.01` | Fraction of transactions forced-fraud |
 | `TEAMS_WEBHOOK_URL` | — | (Optional) MS Teams alert webhook |
+
+### Using the Kaggle dataset
+
+If you want to run the project on the exact Kaggle dataset, place the CSV at `data/synthetic_fraud_dataset.csv` in the repo root. The producer will replay those rows into Kafka, and the trainer can use them directly.
+
+```bash
+make train-kaggle
+```
+
+This keeps the project's real-time architecture intact while swapping the synthetic generator for the Kaggle source data.
 
 ## Fraud Detection Pipeline
 
