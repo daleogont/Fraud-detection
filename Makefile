@@ -13,9 +13,9 @@ up: ## Start all services
 	@echo "Service URLs:"
 	@echo "  Kafka UI:        http://localhost:8080"
 	@echo "  Spark Master:    http://localhost:8081"
-	@echo "  Airflow:         http://localhost:8083 (admin/admin123)"
+	@echo "  Airflow:         http://localhost:8082 (admin/$$AIRFLOW_ADMIN_PASSWORD)"
 	@echo "  MLflow:          http://localhost:5001"
-	@echo "  Grafana:         http://localhost:3000 (admin/grafana123)"
+	@echo "  Grafana:         http://localhost:3000 (admin/$$GRAFANA_PASSWORD)"
 	@echo "  PostgreSQL:      localhost:5432"
 
 down: ## Stop all services
@@ -29,7 +29,7 @@ logs: ## Tail all service logs
 	docker-compose logs -f
 
 logs-producer: ## Tail producer logs
-	docker-compose logs -f producer
+	docker-compose logs -f transaction-producer
 
 logs-spark: ## Tail Spark streaming logs
 	docker-compose logs -f spark-streaming
@@ -47,7 +47,7 @@ clean: ## Remove all containers, volumes, and data
 	rm -rf ./data ./logs
 	@echo "✓ Clean complete"
 
-train: ## Train ML model (synthetic data)
+train: ## Train ML model (default source)
 	@echo "🤖 Starting model training..."
 	docker-compose run --rm airflow-webserver python /opt/ml/train_model.py
 	@echo "✓ Training complete"

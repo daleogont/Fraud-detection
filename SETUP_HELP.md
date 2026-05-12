@@ -6,7 +6,7 @@ This guide helps you get the system running.
 
 1. **Docker Desktop** installed ([download here](https://www.docker.com/products/docker-desktop))
 2. **At least 8 GB RAM** allocated to Docker (12 GB recommended)
-3. **These ports free**: 3000, 5001, 5432, 7077, 8080, 8081, 8082, 8083, 9092
+3. **These ports free**: 3000, 5001, 5432, 7077, 8080, 8081, 8082, 9092
 
 ### Check Prerequisites
 
@@ -16,7 +16,7 @@ docker --version
 # Output: Docker version 20.10.x or higher
 
 # Check ports are free (macOS/Linux)
-lsof -i :3000,5001,5432,8080,8081,8082,8083,9092
+lsof -i :3000,5001,5432,8080,8081,8082,9092
 
 # On Windows:
 netstat -ano | findstr /B :3000
@@ -56,7 +56,7 @@ POSTGRES_PASSWORD=YourSecurePassword123!
 # Airflow (copy from Step 2 above)
 AIRFLOW_FERNET_KEY=<paste fernet key here>
 AIRFLOW_SECRET_KEY=<paste secret key here>
-AIRFLOW_ADMIN_PASSWORD=admin123
+AIRFLOW_ADMIN_PASSWORD=<set your password>
 
 # Grafana
 GRAFANA_PASSWORD=grafana123
@@ -102,8 +102,8 @@ open http://localhost:8080
 open http://localhost:8081
 
 # Airflow - View and manage DAGs
-open http://localhost:8083
-# Login: admin / admin123
+open http://localhost:8082
+# Login: admin / AIRFLOW_ADMIN_PASSWORD
 
 # MLflow - View model training runs
 open http://localhost:5001
@@ -124,10 +124,10 @@ In a **new terminal**:
 
 ```bash
 cd fraud-detection  # Make sure you're in project directory
-make train
+make train-kaggle
 
 # Watch for:
-# ✓ Generating 5000 synthetic transactions...
+# 📂 Loading dataset from /data/synthetic_fraud_dataset.csv
 # ✓ Data split: Train: 4000, Test: 1000
 # ✓ Training XGBoost...
 # 📈 Evaluating on test set...
@@ -149,10 +149,10 @@ make kafka-consume
 
 # Example output:
 # {
-#   "transaction_id": "TXN_...",
-#   "amount": 5000.00,
-#   "flag_high_amount": true,
-#   "timestamp": "2024-01-01T10:30:00"
+#   "Transaction_ID": "TXN_...",
+#   "Transaction_Amount": 5000.00,
+#   "Merchant_Category": "Gambling",
+#   "Fraud_Label": 1
 # }
 
 # See only flagged (fraud) transactions
@@ -160,7 +160,7 @@ make kafka-consume-fraud
 
 # Example output:
 # {
-#   "transaction_id": "TXN_...",
+#   "Transaction_ID": "TXN_...",
 #   "fraud_score": 0.85,
 #   "rule_based_score": 0.80,
 #   "ml_score": 0.90
@@ -188,7 +188,7 @@ open http://localhost:3000
 
 ```bash
 # View Airflow DAGs
-open http://localhost:8083
+open http://localhost:8082
 
 # You should see:
 # - fraud_detection_daily_dag (runs daily at midnight)

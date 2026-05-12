@@ -27,13 +27,13 @@ make up
 # 4. Open services
 # Kafka UI:        http://localhost:8080
 # Spark Master:    http://localhost:8081
-# Airflow:         http://localhost:8083 (admin / admin123)
+# Airflow:         http://localhost:8082 (admin / AIRFLOW_ADMIN_PASSWORD)
 # MLflow:          http://localhost:5001
-# Grafana:         http://localhost:3000 (admin / grafana123)
+# Grafana:         http://localhost:3000 (admin / GRAFANA_PASSWORD)
 # PostgreSQL:      localhost:5432
 
 # 5. Train model (in another terminal)
-make train
+make train-kaggle
 
 # 6. Explore data
 make kafka-consume
@@ -69,7 +69,7 @@ This is a **complete, working system** — you can run it today.
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                        INGESTION LAYER                                  │
 │  transaction-producer  →  Kafka (raw-transactions, 3 partitions)        │
-│  PaySim-style generator   5 fraud patterns · configurable TPS           │
+│  Kaggle CSV replay producer · configurable TPS                           │
 └──────────────────────────────────┬──────────────────────────────────────┘
                                    │
 ┌──────────────────────────────────▼──────────────────────────────────────┐
@@ -142,7 +142,7 @@ cp .env.example .env
 make up
 
 # 4. (Optional) Pre-train the ML model before streaming starts
-make train
+make train-kaggle
 ```
 
 That's it. The transaction producer starts generating data automatically, and Spark Streaming picks it up within seconds.
@@ -186,20 +186,20 @@ This keeps the project's real-time architecture intact while swapping the synthe
 
 ## Fraud Detection Pipeline
 
-### Fraud Patterns Simulated (Producer)
+### Derived Fraud Signals (Spark)
 
 | Pattern | Flag | Trigger |
 |---|---|---|
 | High-amount spike | `flag_high_amount` | amount > $3,000 |
-| Velocity attack | `flag_velocity` | > 5 transactions from same card in 2 min |
-| Off-hours activity | `flag_off_hours` | Transactions 02:00–04:00 UTC |
-| Geo-anomaly | `flag_geo_anomaly` | Location far from customer home region |
+| Velocity attack | `flag_velocity` | daily count >= 6 OR failed count (7d) >= 3 OR previous fraud > 0 |
+| Off-hours activity | `flag_off_hours` | transaction hour in [02:00, 04:00] |
+| Geo-anomaly | `flag_geo_anomaly` | flagged IP OR transaction distance > 75 |
 | Risky merchant | `flag_risky_merchant` | crypto exchange / gambling / wire transfer |
 
 ### Scoring (Spark Streaming)
 
 1. **Rule-based score** runs on every batch (weighted sum of fraud flags, max 1.0)
-2. **ML score** (XGBoost `predict_proba`) is computed when a trained model exists
+2. **ML score** is currently a placeholder in streaming (`0.5` when a model file exists; `0.0` otherwise)
 3. Final `fraud_score = max(rule_score, ml_score)` — flagged if ≥ 0.35
 
 ### Delta Lake Layers
@@ -213,22 +213,16 @@ This keeps the project's real-time architecture intact while swapping the synthe
 ## ML Training
 
 ```bash
-# Train on synthetic data (no Spark / Delta Lake required — good for cold start)
-make train
+# Train with the exact Kaggle dataset mounted at /data/synthetic_fraud_dataset.csv
+make train-kaggle
 
-# Train on real Silver Delta Lake data (run after streaming has collected data)
-docker compose run --rm \
-  -v $(PWD)/ml:/opt/ml \
-  -v fraud-detection-system_models-data:/data/models \
-  -e MLFLOW_TRACKING_URI=http://mlflow:5001 \
-  -e MODEL_PATH=/data/models/fraud_model.pkl \
-  airflow-webserver \
-  python /opt/ml/train_model.py --source delta
+# Optional local fallback (only if you intentionally want synthetic training)
+make train
 ```
 
-The trained model is saved to the shared `models-data` Docker volume and loaded automatically by the Spark Streaming job on its next batch. No restart required.
+The trained model is saved to the shared `models-data` Docker volume and loaded by the Spark Streaming job, but online inference is currently a placeholder score in the streaming code.
 
-**Model features**: `amount`, `log_amount`, `merchant_risk_score`, `flag_high_amount`, `flag_velocity`, `flag_off_hours`, `flag_geo_anomaly`, `flag_risky_merchant`, `is_online`, `event_hour`, `merchant_category_enc`, `card_type_enc`
+**Model features**: `amount`, `log_amount`, `merchant_risk_score`, `flag_high_amount`, `flag_velocity`, `flag_off_hours`, `flag_geo_anomaly`, `flag_risky_merchant`, `is_online`, `event_hour`
 
 ## Airflow DAGs
 
@@ -263,7 +257,8 @@ make logs            # Tail all logs
 make logs-producer   # Tail producer logs
 make logs-spark      # Tail Spark streaming logs
 make logs-airflow    # Tail Airflow logs
-make train           # Run ML training (synthetic data)
+make train           # Run ML training (default source)
+make train-kaggle    # Run ML training using Kaggle CSV
 make kafka-topics    # List Kafka topics
 make kafka-consume   # Peek at raw-transactions (20 messages)
 make kafka-consume-fraud  # Peek at flagged-transactions (20 messages)
@@ -280,7 +275,7 @@ fraud-detection-system/
 ├── .env.example                 # Config template (copy → .env)
 │
 ├── producer/
-│   ├── transaction_generator.py # Kafka producer — PaySim-style synthetic data
+│   ├── transaction_generator.py # Kafka producer — Kaggle CSV replay
 │   ├── requirements.txt
 │   └── Dockerfile
 │

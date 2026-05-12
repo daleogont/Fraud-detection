@@ -7,7 +7,7 @@
 
 -- Create databases
 CREATE DATABASE airflow;
-CREATE DATABASE mlflow_db;
+CREATE DATABASE mlflow;
 
 -- Connect to airflow database
 \c airflow;

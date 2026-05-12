@@ -25,14 +25,15 @@ Transactions → Kafka → Spark → Delta Lake → ML Model → Scoring → Ale
 **1. Transactions Enter (Producer)**
 ```python
 # producer/transaction_generator.py
-# Generates synthetic transaction data with fraud signals
+# Replays rows from data/synthetic_fraud_dataset.csv
 transaction = {
-    "transaction_id": "TXN_001",
-    "amount": 5000.00,
-    "card_id": "CARD_1234",
-    "flag_high_amount": True,  # Signal
-    "flag_velocity": False,     # Signal
-    "timestamp": "2024-01-01T10:30:00"
+   "Transaction_ID": "TXN_001",
+   "User_ID": "USER_42",
+   "Transaction_Amount": 5000.00,
+   "Transaction_Type": "Online",
+   "Timestamp": "2024-01-01 10:30:00",
+   "Merchant_Category": "Gambling",
+   "Fraud_Label": 1
 }
 ```
 
@@ -87,28 +88,28 @@ if final_score >= 0.35:
 
 ### 1. Transaction Generator (`producer/transaction_generator.py`)
 
-**What it does**: Simulates real transactions with fraud signals
+**What it does**: Streams the exact Kaggle dataset rows into Kafka
 
-**For students**: This is where synthetic data comes from. In real systems, this would be a card network or payment processor.
+**For students**: This is your ingestion layer. In production, this would come from a payment gateway or card network.
 
-**Fraud patterns it creates**:
+**Fraud signals it derives downstream**:
 - **High amount** (>$3000): Fraudsters try to steal large amounts
-- **Velocity** (many txns fast): Fraudsters test stolen cards
-- **Off-hours** (2-4 AM): Fraudsters avoid detection by acting when you sleep
-- **Geo-anomaly** (far from home): Transaction from impossible location
-- **Risky merchant** (crypto, gambling): High-risk categories
+- **Velocity** (high daily/failed transaction count): card testing behavior
+- **Off-hours** (2-4 AM): suspicious timing pattern
+- **Geo-anomaly** (IP flagged or large distance): location inconsistency
+- **Risky merchant** (crypto, gambling, wire transfer): higher-risk categories
 
 **Example run**:
 ```bash
 # Start producer
-docker-compose up producer
+docker-compose up transaction-producer
 
 # In another terminal, peek at data
 make kafka-consume
 
 # Output:
-# {"transaction_id": "TXN_001", "amount": 5000, "flag_high_amount": true, ...}
-# {"transaction_id": "TXN_002", "amount": 50, "flag_high_amount": false, ...}
+# {"Transaction_ID":"TXN_001","Transaction_Amount":5000,"Merchant_Category":"Gambling",...}
+# {"Transaction_ID":"TXN_002","Transaction_Amount":50,"Merchant_Category":"Retail",...}
 ```
 
 ### 2. Spark Streaming (`spark_jobs/fraud_streaming_job.py`)
@@ -129,7 +130,7 @@ make kafka-consume
    - fraud_score = 0.3*flag_high_amount + 0.25*flag_velocity + ...
 4. ML Scoring
    - Load pretrained XGBoost model
-   - ml_score = model.predict_proba(features)
+   - ml_score = 0.5 (placeholder in current streaming job)
 5. Final Scoring
    - final_score = max(rule_score, ml_score)
    - is_flagged = final_score > 0.35
@@ -180,10 +181,10 @@ recall = 0.80    # Of all fraud, how many did we catch?
 
 **Run training**:
 ```bash
-make train
+make train-kaggle
 
 # Outputs:
-# 🤖 Generating 5000 synthetic transactions...
+# 📂 Loading dataset from /data/synthetic_fraud_dataset.csv
 # 📊 Data split: Train: 4000 samples, Test: 1000 samples
 # 🤖 Training XGBoost...
 # ✓ Model trained
@@ -234,9 +235,9 @@ Check: Fraud rate in range [0.1%, 10%]?
 
 **View in Airflow**:
 ```
-http://localhost:8083
+http://localhost:8082
 username: admin
-password: admin123
+password: AIRFLOW_ADMIN_PASSWORD from .env
 ```
 
 ### 5. PostgreSQL Database (`scripts/init_postgres.sql`)
@@ -386,7 +387,7 @@ docker-compose exec spark-master spark-sql
 make logs-producer
 
 # Restart producer
-docker-compose restart producer
+docker-compose restart transaction-producer
 
 # Verify Kafka is running
 make kafka-topics  # Should show topics
@@ -415,7 +416,7 @@ make logs-airflow
 docker-compose exec postgres psql -U fraud_admin -c "SELECT 1"
 
 # Trigger DAG manually in Airflow UI
-# http://localhost:8083 → fraud_detection_daily_dag → Trigger
+# http://localhost:8082 → fraud_detection_daily_dag → Trigger
 ```
 
 ### Issue: Grafana not showing data
@@ -438,16 +439,16 @@ docker-compose exec spark-master ls -la /data/models/
 make logs-airflow  # Look for training task
 
 # Retrain manually
-make train
+make train-kaggle
 ```
 
 ---
 
 ## Next Steps
 
-1. **Run the system**: `make up && make train`
+1. **Run the system**: `make up && make train-kaggle`
 2. **Explore Kafka**: `make kafka-consume` and `make kafka-consume-fraud`
-3. **Train your own model**: Edit `ml/train_model.py` and `make train`
+3. **Train your own model**: Edit `ml/train_model.py` and run `make train-kaggle`
 4. **Modify fraud rules**: Edit `producer/transaction_generator.py`
 5. **Add new features**: Edit `spark_jobs/fraud_streaming_job.py`
 6. **Create new dashboards**: Edit `grafana/dashboards/fraud_overview.json`
