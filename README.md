@@ -328,4 +328,4 @@ The **Fraud Detection — Live Overview** dashboard auto-provisions on first sta
 
 ## License
 
-MIT
+Apache License 2.0 — see [LICENSE](LICENSE) for details.

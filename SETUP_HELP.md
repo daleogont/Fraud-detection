@@ -316,20 +316,3 @@ docker-compose exec postgres pg_isready
 # Restart PostgreSQL
 docker-compose restart postgres
 ```
-
-## Next Steps
-
-1. **Complete**: You now have a working fraud detection system!
-2. **Explore**: Browse each service UI and understand what's happening
-3. **Modify**: Try editing code (e.g., fraud thresholds) and see effects
-4. **Learn**: Read [LEARNING_GUIDE.md](LEARNING_GUIDE.md) for deep dives
-5. **Experiment**: Change fraud patterns, retraining frequency, model parameters
-
-## Need Help?
-
-- **LEARNING_GUIDE.md**: Detailed explanations of each component
-- **Code comments**: Every file has comments explaining what it does
-- **Logs**: `make logs` shows exactly what's happening
-- **Service UIs**: Each service has a web UI for exploration
-
-Happy learning! 🚀

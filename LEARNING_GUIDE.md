@@ -1,6 +1,6 @@
 # Learning Guide - Understanding the Fraud Detection System
 
-This guide explains each component of the system from an ML student's perspective.
+This guide explains each component of the system.
 
 ## Table of Contents
 1. [Data Flow](#data-flow)
@@ -456,8 +456,6 @@ make train
 
 ## Key Takeaways
 
-For ML students, remember:
-
 ✅ **Data Quality is Everything**
 - Bad data → Bad model
 - Always validate: nulls, schemas, value ranges
@@ -482,5 +480,3 @@ For ML students, remember:
 - Airflow orchestrates everything
 - Docker makes it portable
 - Version your models in MLflow
-
-Happy learning! 🚀
