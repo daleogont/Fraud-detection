@@ -29,7 +29,7 @@ import os
 from pyspark.sql import SparkSession, DataFrame, Window
 from pyspark.sql.functions import (
     col, from_json, struct, when, max as spark_max, lit, current_timestamp,
-    window, count, coalesce, log, lower, hour, to_timestamp
+    window, count, coalesce, log, lower, hour, to_timestamp, greatest
 )
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType, IntegerType
 
@@ -137,8 +137,14 @@ class FraudDetectionPipeline:
                 .otherwise("very_large")
             ) \
             .withColumn("merchant_risk_score",
-                when(lower(col("Merchant_Category")).isin(risky_merchant_categories), 0.8)
-                .otherwise(coalesce(col("Risk_Score").cast("double"), lit(0.2)))
+                greatest(
+                    when(lower(col("Merchant_Category")) == "crypto", lit(0.9))
+                    .when(lower(col("Merchant_Category")) == "gambling", lit(0.8))
+                    .when(lower(col("Merchant_Category")).isin(["wire transfer", "wire_transfer"]), lit(0.75))
+                    .when(lower(col("Merchant_Category")) == "adult", lit(0.7))
+                    .otherwise(lit(0.2)),
+                    coalesce(col("Risk_Score").cast("double"), lit(0.0))
+                )
             ) \
             .withColumn("flag_high_amount", when(col("amount") >= 3000, lit(True)).otherwise(lit(False))) \
             .withColumn("flag_velocity",
@@ -258,7 +264,10 @@ class FraudDetectionPipeline:
             
             # 2. Write to Bronze (immutable raw data)
             logger.info("\n💾 Step 2: Writing raw data to Bronze layer...")
-            bronze_query = self.write_to_delta_lake(df_raw, 'bronze', mode='append')
+            df_bronze = df_raw \
+                .withColumn("_ingested_at", current_timestamp()) \
+                .withColumn("_record_id", col("Transaction_ID"))
+            bronze_query = self.write_to_delta_lake(df_bronze, 'bronze', mode='append')
             
             # 3. Engineer features
             logger.info("\n🔧 Step 3: Engineering features...")
