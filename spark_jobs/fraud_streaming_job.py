@@ -26,12 +26,18 @@ from datetime import datetime, timedelta
 from typing import Optional
 import os
 
+import pandas as pd
+
 from pyspark.sql import SparkSession, DataFrame, Window
 from pyspark.sql.functions import (
     col, from_json, struct, when, max as spark_max, lit, current_timestamp,
-    window, count, coalesce, log, lower, hour, to_timestamp, greatest
+    window, count, coalesce, log, lower, hour, to_timestamp, greatest,
+    pandas_udf, to_json,
 )
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType, IntegerType
+
+# Per-executor model cache — avoids reloading the pickle on every micro-batch partition
+_MODEL_CACHE: dict = {}
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -251,6 +257,121 @@ class FraudDetectionPipeline:
         
         return query
     
+    def _make_ml_score_udf(self):
+        """
+        Build a pandas_udf that loads the XGBoost model on each executor and
+        returns predict_proba scores for the 10 engineered features.
+        Falls back to 0.0 per row if the model file is absent or fails to load.
+        """
+        model_path = self.model_path
+
+        @pandas_udf(DoubleType())
+        def ml_score_udf(
+            amount: pd.Series,
+            log_amount: pd.Series,
+            merchant_risk_score: pd.Series,
+            flag_high_amount: pd.Series,
+            flag_velocity: pd.Series,
+            flag_off_hours: pd.Series,
+            flag_geo_anomaly: pd.Series,
+            flag_risky_merchant: pd.Series,
+            is_online: pd.Series,
+            event_hour: pd.Series,
+        ) -> pd.Series:
+            global _MODEL_CACHE
+            if model_path not in _MODEL_CACHE:
+                try:
+                    if os.path.exists(model_path):
+                        with open(model_path, 'rb') as f:
+                            _MODEL_CACHE[model_path] = pickle.load(f)
+                    else:
+                        _MODEL_CACHE[model_path] = None
+                except Exception:
+                    _MODEL_CACHE[model_path] = None
+
+            model = _MODEL_CACHE[model_path]
+            if model is None:
+                return pd.Series([0.0] * len(amount))
+
+            try:
+                features = pd.DataFrame({
+                    'amount': amount,
+                    'log_amount': log_amount,
+                    'merchant_risk_score': merchant_risk_score,
+                    'flag_high_amount': flag_high_amount.astype(int),
+                    'flag_velocity': flag_velocity.astype(int),
+                    'flag_off_hours': flag_off_hours.astype(int),
+                    'flag_geo_anomaly': flag_geo_anomaly.astype(int),
+                    'flag_risky_merchant': flag_risky_merchant.astype(int),
+                    'is_online': is_online.astype(int),
+                    'event_hour': event_hour,
+                })
+                return pd.Series(model.predict_proba(features)[:, 1])
+            except Exception:
+                return pd.Series([0.0] * len(amount))
+
+        return ml_score_udf
+
+    def write_flagged_to_postgres(self, df: DataFrame):
+        """
+        Write each flagged transaction to the fraud_metrics PostgreSQL table.
+        Uses foreachBatch so the write runs once per micro-batch, not per row.
+        Connection parameters are read from environment variables.
+        """
+        pg_host = os.getenv('POSTGRES_HOST', 'postgres')
+        pg_user = os.getenv('POSTGRES_USER', 'postgres')
+        pg_password = os.getenv('POSTGRES_PASSWORD', '')
+        pg_db = os.getenv('POSTGRES_DB', 'fraud_db')
+
+        def write_batch(batch_df, batch_id):
+            rows = batch_df.select(
+                col("Timestamp").alias("ts"),
+                col("Transaction_ID").alias("transaction_id"),
+                col("User_ID").alias("user_id"),
+                col("amount"),
+                col("is_flagged"),
+                col("fraud_score"),
+                col("rule_based_score"),
+                col("ml_score"),
+            ).collect()
+
+            if not rows:
+                return
+
+            try:
+                import psycopg2
+                conn = psycopg2.connect(
+                    host=pg_host, user=pg_user, password=pg_password, dbname=pg_db
+                )
+                cur = conn.cursor()
+                cur.executemany(
+                    """
+                    INSERT INTO fraud_metrics
+                        (timestamp, transaction_id, card_id, amount, is_flagged,
+                         fraud_score, rule_based_score, ml_score, rule_names)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    [
+                        (
+                            row['ts'], row['transaction_id'], row['user_id'],
+                            float(row['amount']), bool(row['is_flagged']),
+                            float(row['fraud_score']), float(row['rule_based_score']),
+                            float(row['ml_score']), '',
+                        )
+                        for row in rows
+                    ],
+                )
+                conn.commit()
+                cur.close()
+                conn.close()
+            except Exception as e:
+                logger.error(f"PostgreSQL write error (batch {batch_id}): {e}")
+
+        return df.writeStream \
+            .foreachBatch(write_batch) \
+            .option("checkpointLocation", "/tmp/postgres_checkpoint") \
+            .start()
+
     def run(self):
         """Execute the full streaming pipeline."""
         try:
@@ -277,16 +398,18 @@ class FraudDetectionPipeline:
             logger.info("\n📊 Step 4: Calculating rule-based fraud scores...")
             df_scored = self.calculate_rule_based_score(df_features)
             
-            # 5. Load ML model if available
-            model = self.load_model()
-            
-            # 6. Add ML score (if model exists)
-            if model is not None:
-                logger.info("\n🤖 Step 5: Adding ML model predictions...")
-                # Note: In a real setup, we'd use pandas_udf for distributed inference
-                df_scored = df_scored.withColumn("ml_score", lit(0.5))  # Placeholder
-            else:
-                df_scored = df_scored.withColumn("ml_score", lit(0.0))
+            # 5. Add ML score via pandas_udf (falls back to 0.0 if model is missing)
+            logger.info("\n🤖 Step 5: Adding ML model predictions...")
+            ml_udf = self._make_ml_score_udf()
+            df_scored = df_scored.withColumn(
+                "ml_score",
+                ml_udf(
+                    col("amount"), col("log_amount"), col("merchant_risk_score"),
+                    col("flag_high_amount"), col("flag_velocity"), col("flag_off_hours"),
+                    col("flag_geo_anomaly"), col("flag_risky_merchant"),
+                    col("is_online"), col("event_hour"),
+                ),
+            )
             
             # 7. Combine scores
             logger.info("\n⚖️  Step 6: Combining rule and ML scores...")
@@ -312,26 +435,26 @@ class FraudDetectionPipeline:
             
             # 11. Send flagged transactions back to Kafka for alerting
             logger.info("\n📤 Step 9: Publishing flagged transactions to Kafka...")
-            flagged_for_kafka = df_flagged.select(
-                struct(
-                    col("Transaction_ID"),
-                    col("Timestamp"),
-                    col("User_ID"),
+            alert_query = df_flagged.select(
+                to_json(struct(
+                    col("Transaction_ID").alias("transaction_id"),
+                    col("User_ID").alias("user_id"),
                     col("amount"),
                     col("fraud_score"),
                     col("rule_based_score"),
-                    col("ml_score")
-                ).alias("value")
-            )
-            
-            alert_query = flagged_for_kafka.select(
-                col("value").cast(StringType()).alias("value")
+                    col("ml_score"),
+                    col("Timestamp").alias("timestamp"),
+                )).alias("value")
             ).writeStream \
                 .format("kafka") \
                 .option("kafka.bootstrap.servers", self.kafka_bootstrap) \
                 .option("topic", "flagged-transactions") \
                 .option("checkpointLocation", "/tmp/alert_checkpoint") \
                 .start()
+
+            # 12. Write flagged transactions to PostgreSQL
+            logger.info("\n🐘 Step 10: Writing flagged transactions to PostgreSQL...")
+            pg_query = self.write_flagged_to_postgres(df_flagged)
             
             logger.info("\n" + "=" * 60)
             logger.info("✓ ALL STREAMS RUNNING")
