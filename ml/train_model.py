@@ -80,11 +80,13 @@ class FraudDetectionModelTrainer:
     
     def __init__(self, model_path: str = None, mlflow_uri: str = None):
         """
-        Initialize trainer.
-        
+        Initialize trainer and connect to MLflow.
+
         Args:
-            model_path: Where to save the trained model
-            mlflow_uri: MLflow tracking server URI
+            model_path: Destination path for the pickled model file.
+                        Falls back to MODEL_PATH env var, then /data/models/fraud_model.pkl.
+            mlflow_uri: MLflow tracking server URI.
+                        Falls back to MLFLOW_TRACKING_URI env var, then http://mlflow:5001.
         """
         self.model_path = model_path or os.getenv('MODEL_PATH', '/data/models/fraud_model.pkl')
         self.mlflow_uri = mlflow_uri or os.getenv('MLFLOW_TRACKING_URI', 'http://mlflow:5001')
@@ -111,7 +113,27 @@ class FraudDetectionModelTrainer:
         return pd.read_csv(dataset_path)
 
     def prepare_kaggle_dataset(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Normalize the Kaggle schema into the feature layout used by this project."""
+        """
+        Rename raw dataset columns and engineer all 10 model features in-place.
+
+        Applies the same feature logic as fraud_streaming_job.engineer_features()
+        so that training and serving use identical transformations. Thresholds
+        that must stay in sync across both files:
+            flag_high_amount    >= 3000
+            flag_velocity       daily_count >= 6 | failed >= 3 | prior_fraud > 0
+            flag_off_hours      hour in [2, 4]
+            flag_geo_anomaly    ip_flag == 1 | distance > 75
+            merchant_risk_score crypto=0.9, gambling=0.8, wire_transfer=0.75, adult=0.7
+
+        Args:
+            data: Raw DataFrame with original Kaggle column names (Transaction_Amount, etc.).
+
+        Returns:
+            DataFrame with renamed columns and all 10 FEATURES columns populated.
+
+        Raises:
+            ValueError: If any required source column is absent after renaming.
+        """
         df = data.rename(columns=self.KAGGLE_COLUMN_MAP).copy()
 
         required_columns = [
@@ -214,16 +236,26 @@ class FraudDetectionModelTrainer:
     
     def train(self, data: pd.DataFrame = None, test_size: float = 0.2, source: str = 'synthetic', dataset_path: str = None):
         """
-        Train XGBoost model on fraud detection task.
-        
+        Train an XGBoost classifier and log everything to MLflow.
+
+        Data loading priority:
+            1. data argument (if provided directly)
+            2. CSV file at dataset_path / KAGGLE_DATASET_PATH / DATASET_PATH env vars
+            3. Synthetic data (5 000 rows) when source='synthetic'
+
+        MLflow artifacts logged per run:
+            Params:   test_size, n_features, feature_importance_<name> (x10)
+            Metrics:  roc_auc, pr_auc, precision, recall, f1_score, tpr, fpr
+            Artifact: fraud_model.pkl (also registered via mlflow.sklearn.log_model)
+
         Args:
-            data: Training data (if None, generates synthetic)
-            test_size: Fraction of data for testing
-            source: Data source, either synthetic or csv
-            dataset_path: Optional CSV path for the Kaggle dataset
-            
+            data:         Pre-built feature DataFrame (skips loading step if provided).
+            test_size:    Fraction of data held out for evaluation (default 0.2).
+            source:       'csv' to load from file, 'synthetic' to generate data.
+            dataset_path: Path to the CSV dataset; required when source='csv'.
+
         Returns:
-            Trained XGBoost model
+            Trained XGBClassifier instance (also saved to self.model_path).
         """
         # Generate or use provided data
         if data is None:

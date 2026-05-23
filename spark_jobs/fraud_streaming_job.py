@@ -46,7 +46,17 @@ class FraudDetectionPipeline:
     """Main streaming pipeline for real-time fraud detection."""
     
     def __init__(self, app_name: str = "fraud-detection"):
-        """Initialize Spark session with optimizations for streaming."""
+        """
+        Initialize Spark session and load configuration from environment variables.
+
+        Environment variables (all have defaults for local/Docker use):
+            KAFKA_BOOTSTRAP_SERVERS: Kafka broker address (default: kafka:9092)
+            BRONZE_PATH:             Delta Lake Bronze layer path (default: /data/delta/bronze)
+            SILVER_PATH:             Delta Lake Silver layer path (default: /data/delta/silver)
+            GOLD_PATH:               Delta Lake Gold layer path  (default: /data/delta/gold)
+            FRAUD_THRESHOLD:         Minimum fraud_score to flag a transaction (default: 0.35)
+            MODEL_PATH:              Path to the pickled XGBoost model (default: /data/models/fraud_model.pkl)
+        """
         self.spark = SparkSession.builder \
             .appName(app_name) \
             .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
@@ -68,10 +78,14 @@ class FraudDetectionPipeline:
     
     def read_kafka_stream(self) -> DataFrame:
         """
-        Read streaming data from Kafka.
-        
+        Subscribe to the raw-transactions Kafka topic and parse each message.
+
+        Each Kafka message value is a JSON string with 21 fields matching the
+        dataset schema (Transaction_ID … Fraud_Label). Unknown or missing fields
+        are silently set to null by from_json.
+
         Returns:
-            DataFrame: Kafka messages parsed as transactions
+            DataFrame: Streaming DataFrame with one column per schema field.
         """
         # Define the schema for incoming transactions
         transaction_schema = StructType([
@@ -115,19 +129,25 @@ class FraudDetectionPipeline:
     
     def engineer_features(self, df: DataFrame) -> DataFrame:
         """
-        Create features for ML model.
-        
-        For students: Features are derived from raw transaction data.
-        Good features are:
-        - Informative (help model predict fraud)
-        - Easy to compute (no data leakage)
-        - Interpretable (you can explain them)
-        
+        Derive the 10 ML features and 5 fraud flags from raw transaction fields.
+
+        Engineered columns added:
+            amount               — Transaction_Amount cast to double
+            log_amount           — log(amount + 1), compresses skewed distribution
+            event_hour           — hour extracted from Timestamp (0-23)
+            amount_bucket        — categorical bin: small/medium/large/very_large
+            merchant_risk_score  — per-category risk value, floored by Risk_Score
+            flag_high_amount     — True if amount >= 3000
+            flag_velocity        — True if daily_count >= 6, failed >= 3, or prior fraud
+            flag_off_hours       — True if event_hour in [2, 4]
+            flag_geo_anomaly     — True if IP flagged or distance > 75 km
+            flag_risky_merchant  — True for crypto/gambling/wire_transfer/adult categories
+
         Args:
-            df: Raw transactions
-            
+            df: Raw streaming DataFrame from read_kafka_stream().
+
         Returns:
-            DataFrame: Transactions with engineered features
+            DataFrame: Input columns plus all engineered feature columns.
         """
         risky_merchant_categories = ['crypto', 'gambling', 'wire transfer', 'wire_transfer', 'adult']
 
@@ -174,20 +194,24 @@ class FraudDetectionPipeline:
     
     def calculate_rule_based_score(self, df: DataFrame) -> DataFrame:
         """
-        Calculate fraud score based on business rules.
-        
-        For students: This is a simple heuristic approach.
-        It weights fraud signals and creates a 0-1 score.
-        
-        Rule-based scoring is:
-        ✓ Fast (no ML needed)
-        ✗ Limited (needs manual tuning)
-        
+        Combine the 5 fraud flags into a weighted score in [0.0, 1.0].
+
+        Weights (must sum to <= 1.0):
+            flag_high_amount    0.30
+            flag_velocity       0.25
+            flag_geo_anomaly    0.20
+            flag_off_hours      0.15
+            flag_risky_merchant 0.10
+
+        The score is capped at 1.0 to handle the case where multiple flags fire.
+        These weights are intentionally mirrored in train_model.py label generation
+        so the rule score and ML score stay semantically aligned.
+
         Args:
-            df: Engineered features
-            
+            df: DataFrame returned by engineer_features().
+
         Returns:
-            DataFrame: With rule_based_score column
+            DataFrame: Input columns plus rule_based_score (DoubleType, 0-1).
         """
         # Weight fraud signals
         df = df.withColumn("rule_based_score",
@@ -230,12 +254,21 @@ class FraudDetectionPipeline:
     
     def write_to_delta_lake(self, df: DataFrame, layer: str, mode: str = "append"):
         """
-        Write DataFrame to Delta Lake.
-        
+        Start a streaming write to the Delta Lake layer at the configured path.
+
+        Checkpoint location is derived automatically as <path>_checkpoint so
+        each layer maintains independent stream progress.
+
         Args:
-            df: DataFrame to write
-            layer: 'bronze', 'silver', or 'gold'
-            mode: Write mode (append, overwrite, etc)
+            df:    Streaming DataFrame to sink.
+            layer: One of 'bronze', 'silver', or 'gold'.
+            mode:  Streaming output mode — 'append' for all three layers.
+
+        Returns:
+            StreamingQuery: The running query handle (call .awaitTermination() to block).
+
+        Raises:
+            ValueError: If layer is not one of the three valid values.
         """
         if layer == 'bronze':
             path = self.bronze_path
@@ -373,7 +406,22 @@ class FraudDetectionPipeline:
             .start()
 
     def run(self):
-        """Execute the full streaming pipeline."""
+        """
+        Wire up and start all streaming queries, then block until one terminates.
+
+        Pipeline steps:
+            1  Read raw transactions from Kafka topic raw-transactions
+            2  Write raw + metadata to Bronze Delta table (append)
+            3  Engineer the 10 ML features and 5 fraud flags
+            4  Compute rule_based_score (weighted flag sum, capped at 1.0)
+            5  Score with XGBoost via pandas_udf → ml_score (0.0 if model missing)
+            6  fraud_score = max(rule_based_score, ml_score)
+            7  is_flagged = fraud_score >= FRAUD_THRESHOLD
+            8  Write all enriched records to Silver Delta table (append)
+            9  Write flagged records to Gold Delta table (append)
+            10 Publish flagged records as JSON to Kafka topic flagged-transactions
+            11 Insert flagged records into PostgreSQL fraud_metrics table
+        """
         try:
             logger.info("=" * 60)
             logger.info("STARTING FRAUD DETECTION PIPELINE")
