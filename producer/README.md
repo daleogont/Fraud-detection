@@ -6,6 +6,10 @@ This folder contains the data ingestion producer scripts for the Real-Time Finan
 
 `csv_to_kafka.py` reads the fraud transaction dataset from a CSV file and streams each transaction row into Kafka as a JSON message.
 
+After the feedback from the progress presentation, the producer was improved from a full CSV loading approach to a chunk-based / micro-batch ingestion approach.
+
+Instead of loading the full dataset into memory at once, the updated producer reads the CSV file in smaller chunks and sends each chunk to Kafka. This makes the ingestion process more scalable, reduces memory usage, and better represents a real-world ETL / streaming pipeline.
+
 ## Kafka Topic
 
 `raw-transactions`
@@ -14,15 +18,16 @@ This folder contains the data ingestion producer scripts for the Real-Time Finan
 
 Each Kafka message represents one transaction record in JSON format.
 
-## Verification
+## Updated Ingestion Method
 
-The full dataset was streamed into Kafka successfully.
+The producer uses chunk-based ingestion:
 
-Total records sent: `50,000`
+- Reads the CSV dataset in chunks
+- Converts each transaction row into a JSON message
+- Sends messages to Kafka topic `raw-transactions`
+- Adds a delay between chunks to simulate micro-batch streaming
 
-Kafka offsets verified:
+## Example Run
 
-```text
-raw-transactions:0:16653
-raw-transactions:1:16722
-raw-transactions:2:16625
+```bash
+python csv_to_kafka.py --topic raw-transactions --max-rows 50000 --chunk-size 1000 --delay-between-chunks 2
