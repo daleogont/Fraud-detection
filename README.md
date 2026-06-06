@@ -68,8 +68,8 @@ This is a **complete, working system** — you can run it today.
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                        INGESTION LAYER                                  │
-│  transaction-producer  →  Kafka (raw-transactions, 3 partitions)        │
-│  Kaggle CSV replay producer · configurable TPS                           │
+│  chunk-based CSV producer  →  Kafka (raw-transactions, 3 partitions)     │
+│  Micro-batch CSV ingestion · JSON transaction events                    │
 └──────────────────────────────────┬──────────────────────────────────────┘
                                    │
 ┌──────────────────────────────────▼──────────────────────────────────────┐
@@ -78,8 +78,8 @@ This is a **complete, working system** — you can run it today.
 │                                                                         │
 │   Bronze  ──►  Raw events, schema-enforced          Delta Lake          │
 │   Silver  ──►  Features + rule score + ML score     Delta Lake          │
-│   Gold    ──►  Flagged transactions only            Delta Lake           │
-│                    │                                                     │
+│   Gold    ──►  Flagged transactions only            Delta Lake          │
+│                    │                                                    │
 │                    ├──► Kafka (flagged-transactions)                    │
 │                    └──► PostgreSQL (fraud_metrics)                      │
 └──────────────────────────────────┬──────────────────────────────────────┘
@@ -145,7 +145,7 @@ make up
 make train-kaggle
 ```
 
-That's it. The transaction producer starts generating data automatically, and Spark Streaming picks it up within seconds.
+After starting the services, run the CSV producer to stream transaction data into Kafka. Spark Streaming can then consume the records from `raw-transactions`.
 
 ## Service UIs
 
@@ -160,8 +160,16 @@ That's it. The transaction producer starts generating data automatically, and Sp
 
 ## Configuration
 
-All tunables live in `.env`:
+The updated CSV producer can be configured with command-line arguments:
 
+| Argument | Default | Description |
+|---|---|---|
+| `--topic` | `raw-transactions` | Kafka topic name |
+| `--max-rows` | Full dataset | Maximum number of rows to send |
+| `--chunk-size` | `1000` | Number of CSV rows read per chunk |
+| `--delay-between-chunks` | `2` | Delay between chunks to simulate micro-batch ingestion |
+
+All tunables live in `.env`:
 | Variable | Default | Description |
 |---|---|---|
 | `POSTGRES_USER` | `fraud_admin` | PostgreSQL superuser |
@@ -176,10 +184,19 @@ All tunables live in `.env`:
 
 ### Using the Kaggle dataset
 
-If you want to run the project on the exact Kaggle dataset, place the CSV at `data/synthetic_fraud_dataset.csv` in the repo root. The producer will replay those rows into Kafka, and the trainer can use them directly.
+### Updated Ingestion Approach
+
+Based on the progress presentation feedback, the ingestion layer was improved from a full CSV loading approach to a chunk-based / micro-batch ETL approach.
+The updated producer reads `synthetic_fraud_dataset.csv` in smaller chunks, converts each transaction row into a JSON message, and sends the records to Kafka topic `raw-transactions`.
+This avoids loading the full dataset into memory at once, reduces memory usage, and makes the ingestion pipeline closer to a real-world streaming / ETL system.
+Example run:
 
 ```bash
-make train-kaggle
+python producer/csv_to_kafka.py \
+  --topic raw-transactions \
+  --max-rows 50000 \
+  --chunk-size 1000 \
+  --delay-between-chunks 2
 ```
 
 This keeps the project's real-time architecture intact while swapping the synthetic generator for the Kaggle source data.
@@ -199,8 +216,7 @@ This keeps the project's real-time architecture intact while swapping the synthe
 ### Scoring (Spark Streaming)
 
 1. **Rule-based score** runs on every batch (weighted sum of fraud flags, max 1.0)
-2. **ML score** is currently a placeholder in streaming (`0.5` when a model file exists; `0.0` otherwise)
-3. Final `fraud_score = max(rule_score, ml_score)` — flagged if ≥ 0.35
+2. Final `fraud_score = max(rule_score, ml_score)` — flagged if ≥ 0.35
 
 ### Delta Lake Layers
 
@@ -219,8 +235,6 @@ make train-kaggle
 # Optional local fallback (only if you intentionally want synthetic training)
 make train
 ```
-
-The trained model is saved to the shared `models-data` Docker volume and loaded by the Spark Streaming job, but online inference is currently a placeholder score in the streaming code.
 
 **Model features**: `amount`, `log_amount`, `merchant_risk_score`, `flag_high_amount`, `flag_velocity`, `flag_off_hours`, `flag_geo_anomaly`, `flag_risky_merchant`, `is_online`, `event_hour`
 
@@ -275,7 +289,7 @@ fraud-detection-system/
 ├── .env.example                 # Config template (copy → .env)
 │
 ├── producer/
-│   ├── transaction_generator.py # Kafka producer — Kaggle CSV replay
+│   ├── csv_to_kafka.py # Chunk-based CSV-to-Kafka producer
 │   ├── requirements.txt
 │   └── Dockerfile
 │
