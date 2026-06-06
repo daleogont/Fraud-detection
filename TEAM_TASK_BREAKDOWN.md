@@ -12,8 +12,8 @@
 
 | Name | Role | Responsibility | Ownership Areas |
 |------|------|-----------------|-----------------|
-| **Khurshid Normurodov** | Project Lead / Data Architect | Overall design, GitHub admin, MS Teams owner, milestone tracking | GitHub Repo, Architecture, Integration, DevOps Setup |
-| **Farzaneh Barzegar** | Data Ingestion Engineer | Kafka cluster setup, PaySim simulator, raw event pipeline | Kafka, Producer, Data Generation, Bronze Layer |
+| **Khurshid Normurodov** |Data Architect | Overall design |
+| **Farzaneh Barzegar** | Project Lead /  Data Ingestion Engineer | Kafka cluster setup, raw event pipeline | Kafka, Producer, Data Generation |
 | **Hontar Daniil** | Data Processing & ML Engineer | Spark Streaming, feature engineering, XGBoost fraud scorer, MLflow | Spark Jobs, Silver/Gold Layers, ML Training, Feature Engineering |
 | **Elif Sila Okutucu** | Analytics & DevOps Engineer | Airflow DAGs, Delta Lake layers, Grafana dashboards, Docker | Docker, Airflow, PostgreSQL, Grafana, Monitoring |
 
@@ -39,50 +39,6 @@
 - All team members can clone and contribute
 - Branch protection on main requires 1 approval + CI passing
 - GitHub Projects board linked to issues
-
-**Dependencies:** None
-
----
-
-### Task Group 1.2 - Docker Compose & Environment Setup (Elif + Khurshid)
-
-**Khurshid's Tasks:**
-- [ ] Create `docker-compose.yml` with all 13 services:
-  - Kafka + ZooKeeper
-  - Spark Master + Workers (2)
-  - Airflow (scheduler, webserver, worker)
-  - MLflow tracking server
-  - PostgreSQL
-  - Grafana
-  - Kafka UI
-  - PgAdmin (optional)
-- [ ] Create `.env.example` template with all required variables
-- [ ] Create `Makefile` with shortcuts:
-  - `make up` / `make down`
-  - `make logs` / `make logs-{service}`
-  - `make train` / `make test`
-  - `make kafka-consume` / `make kafka-consume-fraud`
-  - `make status`
-- [ ] Document environment setup in SETUP_HELP.md
-
-**Elif's Tasks:**
-- [ ] Create `Dockerfile` for custom Spark image (with ML libraries)
-- [ ] Create Airflow requirements.txt
-- [ ] Create `.dockerignore` file
-- [ ] Document Docker resource requirements
-- [ ] Test docker-compose up on clean machine
-
-**Deliverables:**
-- `docker-compose.yml` (fully working)
-- `.env.example` (all variables documented)
-- `Makefile` (all shortcuts working)
-- `Dockerfile` (custom Spark image)
-- `SETUP_HELP.md` (step-by-step setup guide)
-
-**Acceptance Criteria:**
-- `make up` starts all services without errors
-- All services pass health checks within 2 minutes
-- Services can communicate with each other
 
 **Dependencies:** None
 
@@ -127,7 +83,7 @@
 
 ---
 
-### Task Group 1.4 - Synthetic Dataset Preparation (Khurshid + Farzaneh)
+### Task Group 1.4 - Synthetic Dataset Preparation (Farzaneh)
 
 **Khurshid's Tasks:**
 - [ ] Acquire or generate synthetic fraud dataset (21 features, 100K+ records)
@@ -788,9 +744,9 @@ make test-integration
 
 ---
 
-### Task Group 6.3 - Documentation (Khurshid + All)
+### Task Group 6.3 - Documentation (All)
 
-**Khurshid - Coordination:**
+**Farzaneh - Coordination:**
 - [ ] Create TEAM_ROLES.md (what each person owns)
 - [ ] Create DEVELOPMENT_WORKFLOW.md:
   - Git workflow (feature branches, PRs)
@@ -838,7 +794,7 @@ make test-integration
 [Known limitations, TODOs]
 ```
 
-**Khurshid - Main Documentation:**
+**Farzaneh - Main Documentation:**
 - [ ] Update main `README.md`:
   - Quick start (5 min)
   - Architecture overview
@@ -903,7 +859,7 @@ make test-integration
 ## 📅 Detailed Timeline
 
 ### Week 1 - Infrastructure
-- **Team**: Khurshid (lead), Elif (Docker), Farzaneh (data)
+- **Team**: Khurshid , Elif (Docker), Farzaneh (data)
 - **Tasks**: 1.1, 1.2, 1.3, 1.4
 - **Deliverable**: Working Docker environment + dataset
 
@@ -918,7 +874,7 @@ make test-integration
 - **Deliverable**: Trained model + integrated ML scoring
 
 ### Week 4 - Orchestration
-- **Team**: Elif (Airflow), Hontar (support), Khurshid (oversight)
+- **Team**: Elif (Airflow), Hontar (support)
 - **Tasks**: 4.1, 4.2, 4.3, 4.4
 - **Deliverable**: Automated daily retraining + hourly DQ checks
 
@@ -928,7 +884,7 @@ make test-integration
 - **Deliverable**: Live dashboards + unit tests
 
 ### Week 6 - Testing & Documentation
-- **Team**: All (documentation), Hontar (load tests), Khurshid (coordination)
+- **Team**: All (documentation), Hontar (load tests)
 - **Tasks**: 6.3, 6.4
 - **Deliverable**: Complete documentation + performance baselines
 
@@ -938,7 +894,7 @@ make test-integration
 
 ```mermaid
 graph TD
-    A["Infrastructure Setup<br/>(Khurshid, Elif)"] --> B["Kafka Producer<br/>(Farzaneh)"]
+    A["Infrastructure Setup<br/>(Farzaneh, Elif)"] --> B["Kafka Producer<br/>(Farzaneh)"]
     A --> C["Spark Streaming<br/>(Hontar)"]
     B --> C
     A --> D["ML Setup<br/>(Hontar)"]
@@ -1052,7 +1008,7 @@ main (production)
 - **Architecture**: Team decision (Khurshid final say)
 - **Task Changes**: GitHub Issues + discussion
 - **Code Review**: 1 approval minimum
-- **Release**: Khurshid approval
+- **Release**: Farzaneh approval
 
 ---
 
