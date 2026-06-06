@@ -7,7 +7,7 @@ The system follows a **Lambda-like architecture** with a real-time streaming pat
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │  DATA SOURCES                                                                   │
-│  synthetic_fraud_dataset.csv  ──►  transaction_generator.py (Kafka Producer)   │
+│  synthetic_fraud_dataset.csv  ──►  csv_to_kafka.py (chunk-based Kafka Producer) │
 └──────────────────────────────────────┬──────────────────────────────────────────┘
                                        │  raw-transactions (Kafka topic)
 ┌──────────────────────────────────────▼──────────────────────────────────────────┐
@@ -56,15 +56,15 @@ The system follows a **Lambda-like architecture** with a real-time streaming pat
 
 ### 2.1 Data Ingestion — Kafka Producer
 
-**File**: `producer/transaction_generator.py`
+**File**: `producer/csv_to_kafka.py`
 
-The producer replays rows from `data/synthetic_fraud_dataset.csv` into a Kafka topic (`raw-transactions`) at a configurable rate (`TRANSACTIONS_PER_SECOND`). It injects synthetic fraud patterns to simulate realistic fraud rates (`FRAUD_RATE`).
+The producer reads the dataset in chunks and sends each transaction row as a JSON message to Kafka topic raw-transactions. This avoids loading the full CSV file into memory at once and simulates a micro-batch ETL ingestion process.
 
 ```
 CSV File
   │
   ▼
-transaction_generator.py
+csv_to_kafka.py
   │  Serialize to JSON
   │  Add fraud signals (5 patterns)
   ▼
