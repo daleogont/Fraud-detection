@@ -283,7 +283,7 @@ class FraudDetectionPipeline:
         
         query = df.writeStream \
             .format("delta") \
-            .mode(mode) \
+            .outputMode(mode) \
             .option("path", path) \
             .option("checkpointLocation", f"{path}_checkpoint") \
             .start()
@@ -463,7 +463,7 @@ class FraudDetectionPipeline:
             logger.info("\n⚖️  Step 6: Combining rule and ML scores...")
             df_scored = df_scored.withColumn(
                 "fraud_score",
-                spark_max(col("rule_based_score"), col("ml_score"))
+                greatest(col("rule_based_score"), col("ml_score"))
             )
             
             # 8. Flag transactions
