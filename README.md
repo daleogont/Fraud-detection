@@ -350,14 +350,14 @@ The dashboard includes:
 - Total Fraud Alerts
 - Average Fraud Score
 - High Risk Alerts
-- Distinct Alerted Entities
+- Unique Cards Flagged
 - Maximum Alert Amount
 - Average Alert Amount
 - Model Performance Metrics
 - Alert Severity Distribution
 - Fraud Score Distribution
 - Highest Alert Amounts
-- Top Alerted Entities
+- Top 10 Alerted Entities
 - Average Detection Contribution
 - Data Quality Checks
 - Fraud Alert Details
