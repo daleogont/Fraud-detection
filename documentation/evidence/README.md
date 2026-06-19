@@ -62,7 +62,8 @@ Evidence showing:
 ```text
 evidence/
 ├── airflow/
-│   └── airflow_dag_validation.png
+    │   ├── airflow_dag_registration.png
+    │   └── airflow_dag_execution_success.png
 ├── dashboard/
 │   └── fraud_alerts_dashboard.png
 ├── postgres/
