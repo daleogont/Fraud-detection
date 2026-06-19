@@ -8,3 +8,4 @@
 | [04_tools_and_technologies.md](04_tools_and_technologies.md) | Full stack rationale, version matrix, dependency map |
 | [05_datasets.md](05_datasets.md) | Schema, statistics, feature engineering, limitations, data lineage |
 | [06_gcp_deployment.md](06_gcp_deployment.md) | Step-by-step guide to run on GCP — Docker Compose on a VM (30 min) and cloud-native managed services |
+| [evidence/](evidence/) | Final validation screenshots for Grafana, PostgreSQL, and Airflow |

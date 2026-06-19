@@ -17,7 +17,7 @@
 | M3 | ML Training & Tracking | Week 3 | ✅ Complete |
 | M4 | Orchestration & Data Quality | Week 4 | ✅ Complete |
 | M5 | Dashboards & Monitoring | Week 5 | ✅ Complete |
-| M6 | Documentation, Testing & Polish | Week 6 | 🔄 In Progress |
+| M6 | Documentation, Testing & Polish | Week 6 | ✅ Complete |
 
 ---
 
