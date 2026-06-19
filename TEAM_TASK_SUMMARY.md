@@ -13,10 +13,10 @@ Quick reference for each team member's responsibilities and deliverables.
 
 | Week | Task Group | Deliverable | Status |
 |------|-----------|-------------|--------|
-| 1 | 1.1 | GitHub repo setup (branches, templates, CI) | ⬜ Not Started |
-| 1 | 1.2 | docker-compose.yml orchestration | ⬜ Not Started |
-| 1 | 1.4 | Dataset acquisition & EDA | ⬜ Not Started |
-| 2-6 | All | Project coordination & oversight | ⬜ Not Started |
+| 1 | 1.1 | GitHub repo setup (branches, templates, CI) | ✅ Complete  |
+| 1 | 1.2 | docker-compose.yml orchestration | ✅ Complete  |
+| 1 | 1.4 | Dataset acquisition & EDA | ✅ Complete  |
+| 2-6 | All | Project coordination & oversight | ✅ Complete  |
 
 ### Key Responsibilities
 - ✅ Create GitHub repository with:
@@ -73,9 +73,9 @@ Total: ~140 hours
 
 | Week | Task Group | Deliverable | Status |
 |------|-----------|-------------|--------|
-| 1 | 1.4 | Dataset validation | ⬜ Not Started |
-| 2 | 2.1 | Kafka Producer | ⬜ Not Started |
-| 3-6 | Support | Producer enhancements & support | ⬜ Not Started |
+| 1 | 1.4 | Dataset validation | ✅ Complete  |
+| 2 | 2.1 | Kafka Producer | ✅ Complete  |
+| 3-6 | Support | Producer enhancements & support | ✅ Complete  |
 
 ### Key Responsibilities
 - ✅ Create transaction_generator.py (Kafka producer)
@@ -145,15 +145,15 @@ Total: ~48 hours
 
 | Week | Task Group | Deliverable | Status |
 |------|-----------|-------------|--------|
-| 2 | 2.2 | Bronze Layer (schema enforcement) | ⬜ Not Started |
-| 2 | 2.3 | Silver Layer (features + rule score) | ⬜ Not Started |
-| 2 | 2.4 | ML Score integration | ⬜ Not Started |
-| 2-3 | 2.5 | Gold Layer (flagging + output) | ⬜ Not Started |
-| 3 | 3.1 | XGBoost ML training | ⬜ Not Started |
-| 3 | 3.2 | MLflow tracking & registry | ⬜ Not Started |
-| 3 | 3.3 | Model evaluation & promotion | ⬜ Not Started |
-| 4 | 6.1 | Unit tests for streaming | ⬜ Not Started |
-| 5 | 6.4 | Performance & load testing | ⬜ Not Started |
+| 2 | 2.2 | Bronze Layer (schema enforcement) | ✅ Complete  |
+| 2 | 2.3 | Silver Layer (features + rule score) | ✅ Complete  |
+| 2 | 2.4 | ML Score integration | ✅ Complete  |
+| 2-3 | 2.5 | Gold Layer (flagging + output) | ✅ Complete  |
+| 3 | 3.1 | XGBoost ML training | ✅ Complete  |
+| 3 | 3.2 | MLflow tracking & registry | ✅ Complete  |
+| 3 | 3.3 | Model evaluation & promotion | ✅ Complete  |
+| 4 | 6.1 | Unit tests for streaming | ✅ Complete  |
+| 5 | 6.4 | Performance & load testing | ✅ Complete  |
 
 ### Key Responsibilities
 
@@ -271,14 +271,14 @@ Total: ~96 hours
 
 | Week | Task Group | Deliverable | Status |
 |------|-----------|-------------|--------|
-| 1 | 1.2 | Docker image & environment setup | ⬜ Not Started |
-| 1 | 1.3 | PostgreSQL initialization | ⬜ Not Started |
-| 4 | 4.1 | Airflow setup & connections | ⬜ Not Started |
-| 4 | 4.2 | Daily Retraining DAG | ⬜ Not Started |
-| 4 | 4.3 | Hourly DQ Monitoring DAG | ⬜ Not Started |
-| 4 | 4.4 | PostgreSQL Integration | ⬜ Not Started |
-| 5 | 5.1 | Grafana Dashboard Setup | ⬜ Not Started |
-| 5 | 5.2 | Advanced Dashboards (optional) | ⬜ Not Started |
+| 1 | 1.2 | Docker image & environment setup | ✅ Complete |
+| 1 | 1.3 | PostgreSQL initialization and validation | ✅ Complete |
+| 4 | 4.1 | Airflow setup & connections | ✅ Complete |
+| 4 | 4.2 | Daily Retraining DAG validation | ✅ Complete |
+| 4 | 4.3 | Hourly DQ Monitoring DAG validation | ✅ Complete |
+| 4 | 4.4 | PostgreSQL Integration | ✅ Complete |
+| 5 | 5.1 | Grafana Fraud Alerts Monitoring Dashboard | ✅ Complete |
+| 6 | 6.3 | Monitoring documentation and evidence collection | ✅ Complete |
 
 ### Key Responsibilities
 
