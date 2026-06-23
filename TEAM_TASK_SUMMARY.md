@@ -4,489 +4,404 @@ Quick reference for each team member's responsibilities and deliverables.
 
 ---
 
-## 🎯 Khurshid Normurodov - Project Lead / Data Architect
+## 🎯 Khurshid Normurodov - Previous Project Lead / Data Architect
 
-**Title**: Project Lead / Data Architect / Product Owner  
-**Responsibility**: Overall design, GitHub admin, MS Teams owner, milestone tracking
+**Title**: Initial Data Architect / Repository Contributor 
+**Responsibility**: Initial architecture support, repository setup, early project planning
 
 ### Core Tasks
 
-| Week | Task Group | Deliverable | Status |
-|------|-----------|-------------|--------|
-| 1 | 1.1 | GitHub repo setup (branches, templates, CI) | ✅ Complete  |
-| 1 | 1.2 | docker-compose.yml orchestration | ✅ Complete  |
-| 1 | 1.4 | Dataset acquisition & EDA | ✅ Complete  |
-| 2-6 | All | Project coordination & oversight | ✅ Complete  |
+| Week | Task Group | Deliverable                                                   | Status     |
+| ---- | ---------- | ------------------------------------------------------------- | ---------- |
+| 1    | 1.1        | Initial GitHub repository setup and project structure         | ✅ Complete |
+| 1    | 1.1        | Basic repository documentation and team access setup          | ✅ Complete |
+
 
 ### Key Responsibilities
-- ✅ Create GitHub repository with:
-  - Branch protection (main requires 1 approval + CI)
-  - PR templates, issue templates
-  - GitHub Projects board (Kanban)
-  - Team member permissions
-  
-- ✅ Architect overall system design
-  
-- ✅ Create docker-compose.yml with 13 services
-  
-- ✅ Create Makefile with shortcuts
-  
-- ✅ Acquire/validate synthetic fraud dataset (100K+ records)
-  
-- ✅ Coordinate team progress & track milestones
-  
-- ✅ Lead code reviews & architectural decisions
+
+* ✅ Created the initial GitHub repository structure
+* ✅ Set up basic project folders and documentation files
+* ✅ Added team members to the repository
+* ✅ Contributed to the initial system architecture discussion
+* ✅ Helped prepare the initial project structure for team collaboration
+
 
 ### Collaboration Points
-- **Elif**: Docker setup & environment variables
-- **Farzaneh**: Dataset validation & testing
+- **Elif**:  Environment planning and documentation alignment
+- **Farzaneh**: Docker setup & Dataset validation & testing
 - **Hontar**: Architecture review & integration
 - **All**: Weekly sync meetings (Mon & Thu)
-
-### Definition of Done
-- GitHub repo accessible by all team members
-- docker-compose.yml brings up all 13 services cleanly
-- Dataset loaded with EDA complete
-- Team can run `make up` successfully
-
-### Timeline
-```
-Week 1: GitHub setup + Docker + Dataset (40 hours)
-Week 2-6: Coordination + oversee integration (20 hours/week)
-Total: ~140 hours
-```
 
 ### Success Metrics
 - All team members productive on first day
 - No blocking architectural issues
 - Daily standup cadence maintained
-- All PRs merged within 48 hours
-
 ---
 
-## 📨 Farzaneh Barzegar - Data Ingestion Engineer
+## 📨 Farzaneh Barzegar - Project Lead / Data Ingestion Engineer
 
-**Title**: Data Ingestion Engineer / Development Team  
-**Responsibility**: Kafka cluster setup, PaySim simulator, raw event pipeline
+**Title**: Project Lead / Data Ingestion Engineer
+**Responsibility**: Team coordination, GCP VM ingestion setup, Kafka/Zookeeper setup, chunk-based CSV-to-Kafka producer, raw transaction pipeline, and ingestion documentation
 
 ### Core Tasks
 
-| Week | Task Group | Deliverable | Status |
-|------|-----------|-------------|--------|
-| 1 | 1.4 | Dataset validation | ✅ Complete  |
-| 2 | 2.1 | Kafka Producer | ✅ Complete  |
-| 3-6 | Support | Producer enhancements & support | ✅ Complete  |
+| Week | Task Group | Deliverable                                                              | Status     |
+| ---- | ---------- | ------------------------------------------------------------------------ | ---------- |
+| 1    | 1.4        | Dataset upload, validation, and ingestion preparation                    | ✅ Complete |
+| 1    | 1.5        | GCP VM setup for Kafka-based ingestion                                   | ✅ Complete |
+| 2    | 2.1        | Kafka and Zookeeper setup for raw transaction streaming                  | ✅ Complete |
+| 2    | 2.1        | Kafka topic `raw-transactions` creation and validation                   | ✅ Complete |
+| 2    | 2.1        | CSV-to-Kafka producer implementation                                     | ✅ Complete |
+| 3    | 2.1        | Chunk-based / micro-batch ingestion update after professor feedback      | ✅ Complete |
+| 3    | 2.1        | Streamed 50,000 transaction records into `raw-transactions`              | ✅ Complete |
+| 3-6  | Support    | Handoff documentation, GitHub updates, and pipeline coordination support | ✅ Complete |
 
 ### Key Responsibilities
-- ✅ Create transaction_generator.py (Kafka producer)
-  - Load synthetic_fraud_dataset.csv
-  - Serialize to JSON
-  - Configure TPS (transactions per second)
-  - Send to Kafka topic `raw-transactions`
-  
-- ✅ Create Dockerfile for producer
-  
-- ✅ Implement fraud injection logic (optional):
-  - 5 synthetic fraud patterns
-  - Configurable fraud rate
-  
-- ✅ Create producer/requirements.txt
-  
-- ✅ Add comprehensive logging & error handling
-  
-- ✅ Create unit tests (tests/test_producer.py)
-  
-- ✅ Validate data flow to Kafka
-  
-- ✅ Document producer README.md
 
-### Kafka Topics You Manage
-```
-raw-transactions (3 partitions) ← Your producer writes here
-  └─→ Spark streaming reads ← Hontar consumes
-```
+* ✅ Set up the GCP VM environment for the ingestion layer
+
+* ✅ Configure Kafka and Zookeeper for transaction streaming
+
+* ✅ Create and validate Kafka topic `raw-transactions`
+
+* ✅ Create `csv_to_kafka.py` as the updated Kafka producer:
+
+  * Read `synthetic_fraud_dataset.csv`
+  * Process the CSV file in chunks instead of loading the full dataset at once
+  * Convert each transaction row into JSON
+  * Send transaction records to Kafka topic `raw-transactions`
+  * Support command-line arguments for topic, max rows, chunk size, and delay between chunks
+
+* ✅ Improve the ingestion design after professor feedback:
+
+  * Replaced full CSV loading with chunk-based / micro-batch ingestion
+  * Reduced memory usage
+  * Made the ingestion flow closer to a real-world ETL / streaming pipeline
+
+* ✅ Stream 50,000 records into Kafka and verify message offsets
+
+* ✅ Add producer dependencies in `producer/requirements.txt`
+
+* ✅ Add logging for chunk processing and total sent records
+
+* ✅ Validate the data flow from CSV to Kafka
+
+* ✅ Prepare ingestion handoff notes for the downstream Spark / ML pipeline
+
+* ✅ Update `producer/README.md`, main `README.md`, and related documentation to reflect the latest ingestion workflow
+
+* ✅ Support final pipeline coordination between ingestion, Spark processing, PostgreSQL outputs, and dashboard validation
+
+The topic was used to stream and verify 50,000 transaction records.
 
 ### Collaboration Points
-- **Khurshid**: Dataset validation
-- **Hontar**: Kafka schema agreement, testing pipeline
-- **Elif**: Docker image verification
+
+* **Daniil**: Kafka input schema, `raw-transactions` topic, Spark ingestion handoff, and pipeline validation
+* **Elif/Sila**: Support for final validation after Kafka/Spark/PostgreSQL pipeline fixes
+* **All**: GitHub documentation updates, final integration checks, and project coordination
 
 ### Definition of Done
-- Producer sends 10-100 TPS to Kafka
-- Messages are valid JSON with correct schema
-- Graceful error handling & logging
-- Handles Kafka connection failures
-- Unit tests passing
-- README documentation complete
 
-### Timeline
-```
-Week 1: Dataset validation (8 hours)
-Week 2: Producer implementation (24 hours)
-Week 3-6: Support & enhancement (16 hours)
-Total: ~48 hours
-```
+* GCP VM prepared for ingestion
+* Kafka and Zookeeper running successfully
+* Kafka topic `raw-transactions` created and validated
+* CSV producer reads data in chunks instead of loading the full file at once
+* 50,000 records streamed successfully into Kafka
+* Kafka offsets verified after ingestion
+* Producer dependencies and documentation updated
+* Handoff notes shared with downstream Spark / ML team
+* Ingestion workflow aligned with professor feedback
 
 ### Success Metrics
-- Producer sustains 100 TPS without data loss
-- Kafka messages are properly formatted
-- Logging shows transaction counts every minute
-- Zero crashed producer instances (in production)
-- Code coverage ≥ 80%
 
+* 50,000 transaction records streamed into Kafka successfully
+* Kafka topic `raw-transactions` verified with correct offsets
+* Producer sends valid JSON messages with the expected schema
+* Chunk-based ingestion works without loading the full dataset into memory
+* Ingestion pipeline is documented and ready for downstream Spark processing
+* Final ingestion design reflects professor feedback
 ---
 
-## 🔄 Hontar Daniil - Data Processing & ML Engineer
+## 🔄 Daniil Hontar - Data Processing & ML Engineer
 
-**Title**: Data Processing & ML Engineer / Development Team  
-**Responsibility**: Spark Streaming, feature engineering, XGBoost fraud scorer, MLflow
+**Title**: Data Processing & ML Engineer / Development Team
+**Responsibility**: Spark Streaming pipeline, Bronze/Silver/Gold data layers, feature engineering, fraud scoring, XGBoost model training, and PostgreSQL/Kafka outputs
 
 ### Core Tasks
 
-| Week | Task Group | Deliverable | Status |
-|------|-----------|-------------|--------|
-| 2 | 2.2 | Bronze Layer (schema enforcement) | ✅ Complete  |
-| 2 | 2.3 | Silver Layer (features + rule score) | ✅ Complete  |
-| 2 | 2.4 | ML Score integration | ✅ Complete  |
-| 2-3 | 2.5 | Gold Layer (flagging + output) | ✅ Complete  |
-| 3 | 3.1 | XGBoost ML training | ✅ Complete  |
-| 3 | 3.2 | MLflow tracking & registry | ✅ Complete  |
-| 3 | 3.3 | Model evaluation & promotion | ✅ Complete  |
-| 4 | 6.1 | Unit tests for streaming | ✅ Complete  |
-| 5 | 6.4 | Performance & load testing | ✅ Complete  |
+| Week | Task Group | Deliverable                                                        | Status     |
+| ---- | ---------- | ------------------------------------------------------------------ | ---------- |
+| 2    | 2.2        | Bronze Layer for raw Kafka transactions                            | ✅ Complete |
+| 2    | 2.3        | Silver Layer with feature engineering and rule-based scoring       | ✅ Complete |
+| 2    | 2.4        | ML score integration and fraud scoring logic                       | ✅ Complete |
+| 2-3  | 2.5        | Gold Layer for flagged transactions and output writing             | ✅ Complete |
+| 3    | 3.1        | XGBoost model training                                             | ✅ Complete |
+| 3    | 3.2        | MLflow tracking support                                            | ✅ Complete |
+| 3    | 3.3        | Model evaluation workflow                                          | ✅ Complete |
+| 4-6  | Support    | Pipeline debugging, PostgreSQL validation, and integration support | ✅ Complete |
 
 ### Key Responsibilities
 
-#### Spark Streaming Job (fraud_streaming_job.py)
-**Bronze Layer**:
-- Schema enforcement on raw transactions
-- Append-only writes to Delta Lake
-- No transformations (raw preservation)
+#### Spark Streaming Job (`fraud_streaming_job.py`)
 
-**Silver Layer** (10 features + 5 flags):
-```
-Features:
-  - log_amount, event_hour, amount_bucket
-  - merchant_risk_score, day_of_week, is_weekend
-  - transaction_count_today, amount_z_score
-  - hour_of_transaction, merchant_category
+**Bronze Layer**
 
-Flags:
-  - flag_high_amount (amount > $3,000)
-  - flag_velocity (daily count ≥ 6)
-  - flag_off_hours (2-4 AM transactions)
-  - flag_geo_anomaly (distance > 75km)
-  - flag_risky_merchant (crypto, gambling, etc.)
+* Read raw transaction events from Kafka topic `raw-transactions`
+* Apply schema validation and type handling
+* Store raw transaction records in the Bronze Delta Lake layer
+* Preserve the original input data for traceability
 
-Rule Score = weighted sum of flags
-```
+**Silver Layer**
 
-**ML Scoring**:
-- Load fraud_model.pkl (if exists)
-- Compute XGBoost prediction
-- Fallback to 0.0 if model missing
+* Clean and transform transaction data
+* Create fraud-related features such as:
 
-**Gold Layer**:
-- Filter is_flagged = 1
-- Write to 3 outputs:
-  - Delta Lake (/data/delta/gold)
-  - Kafka (flagged-transactions topic)
-  - PostgreSQL (fraud_metrics table)
+  * `log_amount`
+  * `event_hour`
+  * `amount_bucket`
+  * `merchant_risk_score`
+  * `flag_high_amount`
+  * `flag_velocity`
+  * `flag_off_hours`
+  * `flag_geo_anomaly`
+  * `flag_risky_merchant`
+  * `is_online`
+* Calculate rule-based fraud scores using fraud signal flags
+* Prepare processed data for ML scoring and downstream outputs
 
-#### ML Training (train_model.py)
-- Load Silver data (or CSV for bootstrap)
-- Feature selection (10 features)
-- Handle class imbalance (scale_pos_weight)
-- Train XGBoost with hyperparameters:
-  - n_estimators=300, max_depth=6, learning_rate=0.05
-- Compute metrics: ROC-AUC, PR-AUC, Precision, Recall, F1
-- Save model to models/fraud_model.pkl
+**ML Scoring**
 
-#### MLflow Tracking
-- Log metrics, parameters, feature importances
-- Create experiment: "fraud-detection"
-- Create runs for each training
-- Model versioning: Staging → Production → Archived
+* Integrate XGBoost-based fraud scoring
+* Combine rule-based score and ML score into a final `fraud_score`
+* Use the final score to decide whether a transaction should be flagged
 
-#### Model Evaluation (evaluate_model.py)
-- Compare trained model vs production
-- Promotion decision: PR-AUC improvement ≥ 2%?
-- Update PostgreSQL model_registry table
+**Gold Layer**
 
-### Data Layers You Own
-```
-Raw Transactions (from Kafka)
-  ↓ Bronze Layer ↓
-  Raw events (append-only)
-  ↓ Silver Layer ↓
-  Features + Scoring (10 features + 5 flags)
-  ↓ Gold Layer ↓
-  Flagged transactions (is_flagged=1)
-  ↓ Outputs ↓
-  Delta Lake + Kafka + PostgreSQL
+* Store only flagged transactions where `fraud_score >= 0.35`
+* Write flagged transactions to:
+
+  * Delta Lake Gold layer: `/data/delta/gold`
+  * Kafka topic: `flagged-transactions`
+  * PostgreSQL table: `fraud_metrics`
+
+#### ML Training (`train_model.py`)
+
+* Train an XGBoost fraud detection model
+* Use selected fraud-related features from the processed data
+* Handle class imbalance during model training
+* Save the trained model for use in the pipeline
+
+#### Model Evaluation (`evaluate_model.py`)
+
+* Evaluate the trained model using classification metrics
+* Compare model performance across runs
+* Support model validation before using it in the pipeline
+
+### Data Layers Owned
+
+```text
+Kafka topic: raw-transactions
+  ↓
+Bronze Layer
+  Raw transaction records
+  ↓
+Silver Layer
+  Cleaned data + engineered features + fraud scores
+  ↓
+Gold Layer
+  Flagged transactions only
+  ↓
+Outputs
+  Kafka flagged-transactions + PostgreSQL fraud_metrics + Delta Gold
 ```
 
 ### Collaboration Points
-- **Farzaneh**: Kafka schema validation, message format
-- **Elif**: PostgreSQL write operations, Airflow integration
-- **Khurshid**: Architecture review, model strategy
+
+* **Farzaneh**: Consumes transaction data from Kafka topic `raw-transactions`, validates input schema, and coordinates ingestion handoff
+* **Elif/Sila**: Provides PostgreSQL `fraud_metrics` output for Grafana dashboard validation and Airflow monitoring
+* **All**: Supports final integration testing and pipeline validation
 
 ### Definition of Done
-- Spark job processes all 3 layers correctly
-- All features computed with no nulls
-- Rule scoring working (0-1 range)
-- ML model training: ROC-AUC ≥ 0.85, PR-AUC ≥ 0.70
-- MLflow tracking 100% of experiments
-- Gold layer outputs to 3 sinks
-- Unit tests: 80%+ coverage
-- Load test: 100 TPS sustained
-- Performance: <100ms per batch
 
-### Timeline
-```
-Week 2: Bronze + Silver + ML Score (32 hours)
-Week 2-3: Gold Layer + ML Training (24 hours)
-Week 3: MLflow + Evaluation (16 hours)
-Week 4-6: Testing + Support (24 hours)
-Total: ~96 hours
-```
+* Spark job reads transaction records from `raw-transactions`
+* Bronze, Silver, and Gold layers are created correctly
+* Fraud-related features and rule-based scores are calculated
+* Final `fraud_score` is generated for processed transactions
+* Flagged transactions are written to the Gold layer
+* Flagged transactions are written to PostgreSQL table `fraud_metrics`
+* Kafka output topic `flagged-transactions` is available for flagged events
+* PostgreSQL output is validated for dashboard usage
 
 ### Success Metrics
-- Streaming pipeline processes 100+ TPS
-- Feature engineering latency < 50ms/batch
-- ML model PR-AUC ≥ 0.75
-- No data loss or duplicates
-- All outputs (Delta, Kafka, PostgreSQL) in sync
-- Load test: handle 500 TPS spike
-- Model retraining completes in < 30 minutes
 
----
+* Spark pipeline successfully consumes records from `raw-transactions`
+* Fraud-related features are generated in the Silver layer
+* Flagged transactions are correctly separated in the Gold layer
+* PostgreSQL `fraud_metrics` stores real flagged transaction outputs
+* Grafana can use `fraud_metrics` as the source for fraud alert dashboards
+* Pipeline behavior is documented and understandable for downstream team members
+
 
 ## 📊 Elif Sila Okutucu - Analytics & DevOps Engineer / Scrum Master
 
-**Title**: Analytics & DevOps Engineer / Scrum Master  
-**Responsibility**: Airflow DAGs, Delta Lake layers, Grafana dashboards, Docker
+**Title**: Analytics & DevOps Engineer / Scrum Master
+**Responsibility**: PostgreSQL validation, Airflow DAG validation, Grafana dashboard development, monitoring documentation, and team progress tracking
 
 ### Core Tasks
 
-| Week | Task Group | Deliverable | Status |
-|------|-----------|-------------|--------|
-| 1 | 1.2 | Docker image & environment setup | ✅ Complete |
-| 1 | 1.3 | PostgreSQL initialization and validation | ✅ Complete |
-| 4 | 4.1 | Airflow setup & connections | ✅ Complete |
-| 4 | 4.2 | Daily Retraining DAG validation | ✅ Complete |
-| 4 | 4.3 | Hourly DQ Monitoring DAG validation | ✅ Complete |
-| 4 | 4.4 | PostgreSQL Integration | ✅ Complete |
-| 5 | 5.1 | Grafana Fraud Alerts Monitoring Dashboard | ✅ Complete |
-| 6 | 6.3 | Monitoring documentation and evidence collection | ✅ Complete |
+| Week | Task Group | Deliverable                                        | Status     |
+| ---- | ---------- | -------------------------------------------------- | ---------- |
+| 1    | 1.3        | PostgreSQL initialization and table validation     | ✅ Complete |
+| 4    | 4.1        | Airflow setup and DAG validation                   | ✅ Complete |
+| 4    | 4.2        | Daily retraining DAG validation                    | ✅ Complete |
+| 4    | 4.3        | Hourly data quality monitoring DAG validation      | ✅ Complete |
+| 4    | 4.4        | PostgreSQL integration and query validation        | ✅ Complete |
+| 5    | 5.1        | Grafana fraud alerts monitoring dashboard          | ✅ Complete |
+| 5    | 5.1        | Dashboard validation using `fraud_metrics` outputs | ✅ Complete |
+| 6    | 6.3        | Monitoring documentation and evidence collection   | ✅ Complete |
 
 ### Key Responsibilities
 
-#### Docker & Environment (Week 1)
-- Create Dockerfile for custom Spark image
-- Create docker-compose with 13 services:
-  - Kafka + ZooKeeper
-  - Spark Master + Workers
-  - Airflow (scheduler, webserver, worker)
-  - MLflow, PostgreSQL, Grafana
-- Create .env.example with all variables
-- Document resource requirements
-- Test on clean machine
+#### PostgreSQL Validation
 
-#### PostgreSQL Setup (Week 1)
-- Create init_postgres.sql with:
-  - 3 databases: airflow, mlflow, fraud
-  - fraud_metrics table
-  - dq_checks table
-  - model_registry table
-- Document table schemas
-- Create sample queries
-- Test Spark + Airflow connections
+* Validate PostgreSQL tables used by the pipeline:
 
-#### Airflow Setup (Week 4)
-- Configure Airflow home directory
-- Create connections: PostgreSQL, Spark, MLflow
-- Create dags/config.yaml with parameters
-- Document setup & access
+  * `fraud_metrics`
+  * `dq_checks`
+  * `model_registry`
+* Check table schemas and query outputs
+* Verify that `fraud_metrics` contains real processed pipeline outputs after the Kafka/Spark pipeline is running
+* Distinguish between sample rows and real processed records
+* Confirm that `fraud_metrics` is designed for flagged transactions only
 
-#### Airflow DAGs (Week 4)
+#### Airflow DAG Validation
 
-**Daily Retraining DAG** (fraud_detection_daily_dag.py):
-```
-fraud_detection_daily (00:00 UTC, daily)
-├── validate_silver_data (row count ≥ yesterday)
-├── decide_retrain (branch: retrain needed?)
-├── retrain_model (SparkSubmitOperator)
-├── evaluate_model (compare metrics)
-├── promote_to_gold (if improved)
-└── send_notification (Slack/Email)
-```
+* Check that Airflow DAGs are available and runnable
+* Validate the daily retraining workflow
+* Validate the hourly data quality monitoring workflow
+* Review DAG execution status and basic task behavior
+* Support documentation of Airflow workflows and expected outputs
 
-**Hourly DQ Monitoring DAG** (data_quality_monitoring_dag.py):
-```
-data_quality_monitoring (:00 hourly)
-├── bronze_row_count_check
-├── bronze_schema_check
-├── silver_null_rate_check
-├── fraud_rate_check
-├── gold_consistency_check
-└── consolidate_dq_report → PostgreSQL
-```
+#### Grafana Dashboard Development
 
-#### Grafana Dashboards (Week 5)
+* Connect Grafana to PostgreSQL
+* Build the fraud alerts monitoring dashboard using `fraud_metrics`
+* Create dashboard panels for:
 
-**Main Dashboard** (fraud_overview.json):
-- KPI Cards: Total txns, flagged, fraud rate, accuracy
-- Time Series: Flagged/hour, fraud rate trend, model performance
-- Heatmaps: Fraud by hour-of-day, by merchant
-- Data Quality: DQ pass rate, null rate, record count
-- Model: Feature importance, ROC-AUC history, PR-AUC history
+  * Total flagged transactions
+  * Average fraud score
+  * Average flagged transaction amount
+  * Fraud alerts over time
+  * Recent flagged transaction records
+  * Data quality check results, where available
+* Validate dashboard queries against PostgreSQL outputs
+* Ensure the dashboard reflects actual pipeline data rather than only sample records
 
-**Optional Dashboards**:
-- fraud_details.json (transaction explorer)
-- model_performance.json (experiment comparison)
-- dq_monitoring.json (pipeline health)
+#### Monitoring Documentation
 
-#### Monitoring & Alerting
-- Create Grafana alert rules:
-  - Fraud rate spike (> 5%)
-  - Pipeline latency (> 30s)
-  - DQ check failure
-  - Model performance degradation
+* Document dashboard usage and data sources
+* Collect evidence/screenshots for the final project submission
+* Explain how Grafana reads from PostgreSQL and visualizes fraud alerts
+* Support final validation after Kafka, Spark, and PostgreSQL outputs are confirmed
 
-### Services You Manage
-```
-Docker Compose Services:
-├── Kafka + ZooKeeper
-├── Spark Master + Workers
-├── Airflow (scheduler, webserver, worker)
-├── MLflow
-├── PostgreSQL ← Primary responsibility
-└── Grafana ← Primary responsibility
+#### Scrum Master / Coordination Support
+
+* Track team progress and blockers
+* Follow up on task status and sprint updates
+* Support team communication around integration issues
+* Help identify blockers in the final pipeline validation stage
+
+### Services and Outputs Supported
+
+```text
+PostgreSQL
+  ├── fraud_metrics  → used for fraud alerts dashboard
+  ├── dq_checks      → used for data quality monitoring
+  └── model_registry → used for model tracking information
+
+Airflow
+  ├── fraud_detection_daily_dag
+  └── data_quality_monitoring_dag
+
+Grafana
+  └── Fraud alerts monitoring dashboard
 ```
 
 ### Collaboration Points
-- **Khurshid**: Docker-compose.yml review, environment variables
-- **Hontar**: DAG task specifications, PostgreSQL write schemas
-- **Farzaneh**: Testing producer in Docker
-- **All**: Airflow connection verification
+
+* **Farzaneh**: Validates dashboard results after ingestion and Kafka pipeline updates
+* **Daniil**: Uses Spark/PostgreSQL outputs, especially `fraud_metrics`, for dashboard validation
+* **All**: Supports final integration checks, documentation, and evidence collection
 
 ### Definition of Done
-- docker-compose up starts all services in 2 minutes
-- PostgreSQL has correct schema & permissions
-- Airflow daily DAG runs successfully at 00:00 UTC
-- DQ DAG runs hourly without failure
-- Grafana shows live data (auto-refresh 30s)
-- All panels query PostgreSQL correctly
-- Alerts trigger on threshold breach
-- Documentation complete & tested
 
-### Timeline
-```
-Week 1: Docker + PostgreSQL (24 hours)
-Week 4: Airflow setup + DAGs (40 hours)
-Week 5: Grafana dashboards (32 hours)
-Week 6: Monitoring & support (16 hours)
-Total: ~112 hours
-```
+* PostgreSQL tables are accessible and validated
+* `fraud_metrics` output is checked before dashboard finalization
+* Grafana is connected to PostgreSQL successfully
+* Fraud alerts dashboard uses real processed records from `fraud_metrics`
+* Airflow DAGs are visible and validation status is documented
+* Dashboard queries are checked against PostgreSQL results
+* Monitoring documentation and evidence are prepared for final submission
+* Scrum/task tracking is updated during final project coordination
 
 ### Success Metrics
-- 100% system uptime (99.5% target)
-- All DAG SLAs met (30 min per task)
-- Daily retraining completes in < 2 hours
-- DQ checks complete in < 10 minutes
-- Grafana dashboards load in < 2 seconds
-- All service health checks pass
-- Zero alert noise (< 5 false positives/week)
 
----
-
-## 📋 Task Distribution Summary
-
-### By Week
-
-```
-Week 1 (Infrastructure - 80 hours)
-├─ Khurshid: GitHub + Docker + Dataset (40h)
-├─ Elif: Docker images + PostgreSQL (24h)
-└─ Farzaneh: Data validation (8h)
-
-Week 2-3 (Streaming & ML - 120 hours)
-├─ Farzaneh: Producer enhancements (8h)
-├─ Hontar: All streaming layers + ML (96h)
-└─ Khurshid: Architecture support (16h)
-
-Week 4 (Orchestration - 80 hours)
-├─ Elif: Airflow + DAGs (56h)
-├─ Hontar: ML integration support (16h)
-└─ Khurshid: Oversight (8h)
-
-Week 5 (Analytics - 80 hours)
-├─ Elif: Grafana dashboards (48h)
-├─ Hontar: Tests + performance (24h)
-└─ Khurshid: Coordination (8h)
-
-Week 6 (Documentation & Testing - 64 hours)
-├─ All: Component documentation (32h)
-├─ Hontar: Load testing (16h)
-└─ Khurshid: Final coordination (16h)
-
-Total: 424 hours (~18 hours/week per person avg)
-```
-
-### By Person
-
-| Person | Week 1 | Week 2-3 | Week 4 | Week 5 | Week 6 | Total |
-|--------|--------|----------|--------|--------|--------|-------|
-| Khurshid | 40h | 16h | 8h | 8h | 16h | 88h |
-| Farzaneh | 8h | 32h | 0h | 8h | 8h | 56h |
-| Hontar | 0h | 96h | 16h | 24h | 16h | 152h |
-| Elif | 24h | 0h | 56h | 48h | 16h | 144h |
-| **Total** | **72h** | **144h** | **80h** | **88h** | **56h** | **440h** |
-
----
+* Grafana connects successfully to PostgreSQL
+* Dashboard panels query the correct PostgreSQL tables
+* `fraud_metrics` is validated as the source for flagged transaction alerts
+* Sample rows and real processed rows are clearly distinguished
+* Airflow DAG validation is documented
+* Dashboard is ready for final demonstration using actual pipeline outputs
+* Monitoring documentation is clear and aligned with the final system behavior
+  
 
 ## 🔄 Critical Path Dependencies
 
+```text
+1. Initial Repository and Project Structure Setup
+   └─→ GitHub repository, folders, and basic documentation prepared
+       ↓
+2. Ingestion Environment Setup (Farzaneh)
+   ├─→ GCP VM prepared for ingestion
+   ├─→ Kafka and Zookeeper configured
+   └─→ Kafka topic `raw-transactions` created
+       ↓
+3. Chunk-Based Data Ingestion (Farzaneh)
+   ├─→ `csv_to_kafka.py` reads the CSV dataset in chunks
+   ├─→ Transaction records are converted to JSON
+   └─→ 50,000 records streamed into `raw-transactions`
+       ↓
+4. Spark Streaming and Fraud Processing (Daniil)
+   ├─→ Read from Kafka topic `raw-transactions`
+   ├─→ Create Bronze, Silver, and Gold layers
+   ├─→ Generate fraud-related features and scores
+   └─→ Write flagged transactions to PostgreSQL `fraud_metrics`
+       ↓
+5. Airflow and Monitoring Validation (Elif/Sila)
+   ├─→ Validate Airflow DAGs
+   ├─→ Check PostgreSQL outputs
+   └─→ Validate data quality monitoring flow
+       ↓
+6. Grafana Dashboard Validation (Elif/Sila)
+   ├─→ Connect Grafana to PostgreSQL
+   ├─→ Build fraud alerts dashboard using `fraud_metrics`
+   └─→ Validate dashboard using real processed records
+       ↓
+7. Final Integration, Documentation, and Presentation (All)
+   ├─→ Component README updates
+   ├─→ System documentation updates
+   ├─→ Final validation evidence
+   └─→ Presentation preparation
 ```
-1. GitHub Repo Created (Khurshid)
-   ↓
-2. Docker Setup + PostgreSQL (Khurshid, Elif)
-   ├─→ Dataset Ready (Khurshid, Farzaneh)
-   └─→ Kafka Producer (Farzaneh)
-       ↓
-3. Spark Streaming (Hontar)
-   ├─→ Bronze/Silver/Gold Layers
-   └─→ ML Training + MLflow (Hontar)
-       ↓
-4. Airflow DAGs (Elif) + Integration (Hontar)
-   ├─→ Daily Retraining
-   └─→ Hourly DQ Checks
-       ↓
-5. Grafana Dashboards (Elif)
-   ├─→ Live Monitoring
-   └─→ Alerting Rules
-       ↓
-6. Testing (All) + Documentation (All)
-   ├─→ Unit Tests
-   ├─→ Integration Tests
-   ├─→ Load Tests
-   └─→ Component README + Team Documentation
-```
-
 ---
 
 ## ✅ Weekly Checklist for Each Person
 
 ### Khurshid's Checklist
-- Week 1: GitHub repo created + Docker runs + Dataset loaded
-- Week 2-3: Code reviews + merge PRs + unblock team
-- Week 4: DAG review + model strategy + ML integration
-- Week 5: Dashboard review + alert config + monitoring
-- Week 6: Documentation review + final testing + release prep
+- Week 1: GitHub repo created 
 
 ### Farzaneh's Checklist
-- Week 1: Dataset validation + data quality checks
+- Week 1: docker-compose + Dataset validation + data quality checks
 - Week 2: Producer implementation + logging + error handling
 - Week 3: Producer enhancements + optional fraud injection
 - Week 4-6: Support + testing + documentation
@@ -499,29 +414,8 @@ Total: 424 hours (~18 hours/week per person avg)
 - Week 6: Load testing completion + documentation
 
 ### Elif's Checklist
-- Week 1: Dockerfile + docker-compose + PostgreSQL
+- Week 1: PostgreSQL
 - Week 4: Airflow setup + daily DAG + DQ DAG
 - Week 5: Grafana + dashboards + alerts
 - Week 6: Monitoring + documentation + support
-
 ---
-
-## 📞 Communication Cadence
-
-**Daily** (async):
-- Slack updates (end of day) in #fraud-detection-project
-- GitHub PR reviews (target 24h)
-
-**Twice Weekly** (sync):
-- Monday 10:00 UTC: Sprint planning & blockers
-- Thursday 15:00 UTC: Progress check & course correction
-
-**As Needed**:
-- Architecture discussions (Khurshid leads)
-- Technical deep dives (owner leads)
-- Emergency incidents (entire team)
-
----
-
-**Created**: May 13, 2026  
-**For Team**: Khurshid, Farzaneh, Hontar, Elif
