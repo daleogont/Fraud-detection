@@ -25,7 +25,7 @@ from datetime import datetime, timedelta
 
 import psycopg2
 from airflow import DAG
-from airflow.operators.python import PythonOperator, BranchPythonOperator
+from airflow.operators.python import PythonOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.exceptions import AirflowException
 
@@ -417,7 +417,7 @@ validate = PythonOperator(
     python_callable=validate_silver_data,
     dag=dag,
 )
-decide = BranchPythonOperator(
+decide = PythonOperator(
     task_id="decide_retrain",
     python_callable=decide_retrain,
     provide_context=True,
