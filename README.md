@@ -5,7 +5,7 @@ A **complete, working** ML data engineering pipeline for fraud detection. Built 
 **⚡ Quick Start (5 minutes)**
 ```bash
 # 1. Clone and navigate
-git clone https://github.com/khurshidnm/fraud-detection.git
+git clone https://github.com/daleogont/Fraud-detection
 cd fraud-detection
 
 # 2. Setup environment
