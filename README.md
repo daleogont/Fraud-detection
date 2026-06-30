@@ -131,7 +131,7 @@ This is a **complete, working system** — you can run it today.
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/khurshidnm/fraud-detection.git
+git clone https://github.com/daleogont/Fraud-detection
 cd fraud-detection-system
 
 # 2. Create your .env file and fill in passwords
